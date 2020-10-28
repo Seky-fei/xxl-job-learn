@@ -14,8 +14,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * job lose-monitor instance
- *
  * @author xuxueli 2015-9-1 18:05:56
+ * 
+ * 任务结果丢失处理: 查询调度记录(日志表)停留在 "运行中" 超过10min没执行完的数据, 将其更新成任务丢失失败状态
  */
 public class JobLosedMonitorHelper {
 	private static Logger logger = LoggerFactory.getLogger(JobLosedMonitorHelper.class);

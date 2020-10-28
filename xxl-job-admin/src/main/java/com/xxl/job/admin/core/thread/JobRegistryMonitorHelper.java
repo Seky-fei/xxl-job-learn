@@ -13,6 +13,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * job registry instance
  * @author xuxueli 2016-10-02 19:10:24
+ * 
+ * (1)删除数据xxl_job_registry: 删除最近 30*3秒内 没有更新的数据.
+ * (2)刷新执行器的地址: 获取xxl_job_registry表最近30*3秒内的数据, 将xxl_job_registry中执行器的地址更新到xxl_job_group表中
+ * 
  */
 public class JobRegistryMonitorHelper {
 	private static Logger logger = LoggerFactory.getLogger(JobRegistryMonitorHelper.class);
@@ -30,17 +34,18 @@ public class JobRegistryMonitorHelper {
 			public void run() {
 				while (!toStop) {
 					try {
-						// auto registry group
+						//获取自动注册的执行器 address_type=0
 						List<XxlJobGroup> groupList = XxlJobAdminConfig.getAdminConfig().getXxlJobGroupDao().findByAddressType(0);
 						if (groupList!=null && !groupList.isEmpty()) {
 
-							// remove dead address (admin/executor)
+							// remove dead address (admin/executor) 查询xxl_job_registry 最近 30*3秒 没有更新的数据，并删除
 							List<Integer> ids = XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().findDead(RegistryConfig.DEAD_TIMEOUT, new Date());
 							if (ids!=null && ids.size()>0) {
 								XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().removeDead(ids);
 							}
 
-							// fresh online address (admin/executor)
+							// fresh online address (admin/executor) 
+							//获取xxl_job_registry表 最近 30*3秒内的数据,再遍历数据,将registry_group为EXECUTOR的数据存入appAddressMap(key=registry_key, value是对应registry_value组成的list)
 							HashMap<String, List<String>> appAddressMap = new HashMap<String, List<String>>();
 							List<XxlJobRegistry> list = XxlJobAdminConfig.getAdminConfig().getXxlJobRegistryDao().findAll(RegistryConfig.DEAD_TIMEOUT, new Date());
 							if (list != null) {
@@ -61,6 +66,7 @@ public class JobRegistryMonitorHelper {
 							}
 
 							// fresh group address
+							//自动注册的执行器数据,更新xxl_job_group执行器地址列表(多地址逗号分隔)
 							for (XxlJobGroup group: groupList) {
 								List<String> registryList = appAddressMap.get(group.getAppname());
 								String addressListStr = null;

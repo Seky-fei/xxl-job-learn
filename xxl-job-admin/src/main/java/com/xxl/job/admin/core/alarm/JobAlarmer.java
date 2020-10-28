@@ -19,6 +19,9 @@ public class JobAlarmer implements ApplicationContextAware, InitializingBean {
     private static Logger logger = LoggerFactory.getLogger(JobAlarmer.class);
 
     private ApplicationContext applicationContext;
+    /**
+     * 告警列表
+     */
     private List<JobAlarm> jobAlarmList;
 
     @Override
@@ -26,6 +29,10 @@ public class JobAlarmer implements ApplicationContextAware, InitializingBean {
         this.applicationContext = applicationContext;
     }
 
+    /**
+     * 使用InitializingBean注入所有的告警类
+     * @throws Exception
+     */
     @Override
     public void afterPropertiesSet() throws Exception {
         Map<String, JobAlarm> serviceBeanMap = applicationContext.getBeansOfType(JobAlarm.class);
@@ -35,14 +42,16 @@ public class JobAlarmer implements ApplicationContextAware, InitializingBean {
     }
 
     /**
-     * job alarm
+     * job alarm 遍历告警列表jobAlarmList 调用告警方法
      *
      * @param info
      * @param jobLog
      * @return
+     * 
+     *  任务执行失败调用该方法进行告警处理, 默认只有邮件告警,可以继承JobAlarmer类实现自定义告警
+     *  告警列表jobAlarmList只要有一个失败,告警就失败!
      */
     public boolean alarm(XxlJobInfo info, XxlJobLog jobLog) {
-
         boolean result = false;
         if (jobAlarmList!=null && jobAlarmList.size()>0) {
             result = true;  // success means all-success
@@ -58,7 +67,6 @@ public class JobAlarmer implements ApplicationContextAware, InitializingBean {
                 }
             }
         }
-
         return result;
     }
 

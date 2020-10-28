@@ -13,8 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * job log report helper
- *
  * @author xuxueli 2019-11-22
+ * (1)将执行器执行的结果按天汇总统计xxxl_job_log写入xxl_job_log_report(执行成功, 失败, 正在运行)
+ * (2)删除Handler执行日志xxl_job_log(每隔一天删除一次)
  */
 public class JobLogReportHelper {
     private static Logger logger = LoggerFactory.getLogger(JobLogReportHelper.class);
@@ -23,8 +24,7 @@ public class JobLogReportHelper {
     public static JobLogReportHelper getInstance(){
         return instance;
     }
-
-
+    
     private Thread logrThread;
     private volatile boolean toStop = false;
     public void start(){
