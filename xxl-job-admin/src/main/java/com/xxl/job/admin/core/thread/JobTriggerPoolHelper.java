@@ -20,7 +20,11 @@ public class JobTriggerPoolHelper {
 
     // ---------------------- trigger pool ----------------------
 
-    // fast/slow thread pool
+    /**
+     * 每分钟任务jobId执行的次数大于10,任务用slowTriggerPool线程执行; 
+     * 每分钟任务jobId执行的次数小于或等于10用fastTriggerPool线程池
+     */
+    // fast/slow thread pool 
     private ThreadPoolExecutor fastTriggerPool = null;
     private ThreadPoolExecutor slowTriggerPool = null;
 
@@ -60,9 +64,9 @@ public class JobTriggerPoolHelper {
         logger.info(">>>>>>>>> xxl-job trigger thread pool shutdown success.");
     }
 
-
-    // job timeout count
+    //分钟时间窗口
     private volatile long minTim = System.currentTimeMillis()/60000;     // ms > min
+    //统计每分钟jobId执行的次数(默认大于500ms的任务jobId才进入统计)
     private volatile ConcurrentMap<Integer, AtomicInteger> jobTimeoutCountMap = new ConcurrentHashMap<>();
 
 
@@ -76,10 +80,11 @@ public class JobTriggerPoolHelper {
                            final String executorParam,
                            final String addressList) {
 
-        // choose thread pool
+        // choose thread pool 每分钟任务jobId执行的次数大于10,任务用slowTriggerPool线程执行; 小于或等于10用fastTriggerPool线程池
         ThreadPoolExecutor triggerPool_ = fastTriggerPool;
         AtomicInteger jobTimeoutCount = jobTimeoutCountMap.get(jobId);
-        if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {      // job-timeout 10 times in 1 min
+        // job-timeout 10 times in 1 min
+        if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {
             triggerPool_ = slowTriggerPool;
         }
 
@@ -96,25 +101,22 @@ public class JobTriggerPoolHelper {
                 } catch (Exception e) {
                     logger.error(e.getMessage(), e);
                 } finally {
-
-                    // check timeout-count-map
+                    // check timeout-count-map 时间窗口: 统计每分钟jobId执行的次数
                     long minTim_now = System.currentTimeMillis()/60000;
                     if (minTim != minTim_now) {
                         minTim = minTim_now;
                         jobTimeoutCountMap.clear();
                     }
 
-                    // incr timeout-count-map
+                    // incr timeout-count-map 默认大于500ms的任务jobId才进入统计
                     long cost = System.currentTimeMillis()-start;
-                    if (cost > 500) {       // ob-timeout threshold 500ms
+                    if (cost > 500) {      // ob-timeout threshold 500ms
                         AtomicInteger timeoutCount = jobTimeoutCountMap.putIfAbsent(jobId, new AtomicInteger(1));
                         if (timeoutCount != null) {
                             timeoutCount.incrementAndGet();
                         }
                     }
-
                 }
-
             }
         });
     }

@@ -54,10 +54,12 @@ public class XxlJobTrigger {
             logger.warn(">>>>>>>>>>>> trigger fail, jobId invalid，jobId={}", jobId);
             return;
         }
+        //设置执行器任务参数
         if (executorParam != null) {
             jobInfo.setExecutorParam(executorParam);
         }
         int finalFailRetryCount = failRetryCount>=0?failRetryCount:jobInfo.getExecutorFailRetryCount();
+        //获取执行器
         XxlJobGroup group = XxlJobAdminConfig.getAdminConfig().getXxlJobGroupDao().load(jobInfo.getJobGroup());
 
         // cover addressList
@@ -66,7 +68,7 @@ public class XxlJobTrigger {
             group.setAddressList(addressList.trim());
         }
 
-        // sharding param
+        // sharding param 执行器任务分片参数
         int[] shardingParam = null;
         if (executorShardingParam!=null){
             String[] shardingArr = executorShardingParam.split("/");
@@ -111,8 +113,11 @@ public class XxlJobTrigger {
     private static void processTrigger(XxlJobGroup group, XxlJobInfo jobInfo, int finalFailRetryCount, TriggerTypeEnum triggerType, int index, int total){
 
         // param
+        //阻塞策略
         ExecutorBlockStrategyEnum blockStrategy = ExecutorBlockStrategyEnum.match(jobInfo.getExecutorBlockStrategy(), ExecutorBlockStrategyEnum.SERIAL_EXECUTION);  // block strategy
+        //路由策略
         ExecutorRouteStrategyEnum executorRouteStrategyEnum = ExecutorRouteStrategyEnum.match(jobInfo.getExecutorRouteStrategy(), null);    // route strategy
+        //路由策略是分片广播时,设置执行器任务分片参数(执行器执行任务地址列表address_list, index/total表示使用index处地址执行任务)
         String shardingParam = (ExecutorRouteStrategyEnum.SHARDING_BROADCAST==executorRouteStrategyEnum)?String.valueOf(index).concat("/").concat(String.valueOf(total)):null;
 
         // 1、save log-id
@@ -138,7 +143,7 @@ public class XxlJobTrigger {
         triggerParam.setBroadcastIndex(index);
         triggerParam.setBroadcastTotal(total);
 
-        // 3、init address
+        // 3、init address 根据轮询策略计算出对应的任务执行地址
         String address = null;
         ReturnT<String> routeAddressResult = null;
         if (group.getRegistryList()!=null && !group.getRegistryList().isEmpty()) {

@@ -5,7 +5,7 @@ import com.xxl.job.admin.core.util.I18nUtil;
 
 /**
  * Created by xuxueli on 17/3/10.
- * 路由策略: 任务执行的路由策略
+ * 路由策略: 任务执行的路由策略(ExecutorRouter是具体的路由策略算法)
  */
 public enum ExecutorRouteStrategyEnum {
     /**
@@ -45,7 +45,7 @@ public enum ExecutorRouteStrategyEnum {
      */
     BUSYOVER(I18nUtil.getString("jobconf_route_busyover"), new ExecutorRouteBusyover()),
     /**
-     * 分片广播：广播触发对应集群中所有机器执行一次任务
+     * 分片广播：广播触发对应集群中所有机器执行一次任务(轮询算法在代码里用"执行器任务分片参数"实现)
      */
     SHARDING_BROADCAST(I18nUtil.getString("jobconf_route_shard"), null);
 

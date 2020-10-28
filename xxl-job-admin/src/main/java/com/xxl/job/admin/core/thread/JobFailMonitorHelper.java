@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
  * job monitor instance
  *
  * @author xuxueli 2015-9-1 18:05:56
+ * 
+ * 循环查询执行失败的日志(xxl_job_log): 任务失败设有重试次数-任务调度重试 + 触发告警(默认是邮件告警)
  */
 public class JobFailMonitorHelper {
 	private static Logger logger = LoggerFactory.getLogger(JobFailMonitorHelper.class);
@@ -50,9 +52,8 @@ public class JobFailMonitorHelper {
 								XxlJobLog log = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().load(failLogId);
 								XxlJobInfo info = XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().loadById(log.getJobId());
 
-								// 1、fail retry monitor
+								// 1、fail retry monitor 任务失败设有重试次数: 任务调度重试
 								if (log.getExecutorFailRetryCount() > 0) {
-									// TODO 这是干什么的???
 									JobTriggerPoolHelper.trigger(log.getJobId(), TriggerTypeEnum.RETRY, (log.getExecutorFailRetryCount()-1), log.getExecutorShardingParam(), log.getExecutorParam(), null);
 									String retryMsg = "<br><br><span style=\"color:#F39C12;\" > >>>>>>>>>>>"+ I18nUtil.getString("jobconf_trigger_type_retry") +"<<<<<<<<<<< </span><br>";
 									log.setTriggerMsg(log.getTriggerMsg() + retryMsg);

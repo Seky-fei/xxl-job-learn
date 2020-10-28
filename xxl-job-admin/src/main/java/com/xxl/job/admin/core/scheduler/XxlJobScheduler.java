@@ -24,21 +24,22 @@ public class XxlJobScheduler  {
         // init i18n 国际化相关
         initI18n();
 
-        //删除xxl_job_registry过期数据 + 更新执行器xxl_job_group的执行器地址列表
+        //每30秒循环监控: 删除xxl_job_registry过期数据 + 更新执行器xxl_job_group的执行器地址列表
         JobRegistryMonitorHelper.getInstance().start();
         
         // admin fail-monitor run 
-        // 循环监听任务执行日志发触发告警: 任务handler执行失败,根据执行日志触发告警
+        // 每10秒循环监听任务执行日志发触发告警: 失败的任务重试 + 根据执行日志触发告警
         JobFailMonitorHelper.getInstance().start();
 
         // admin lose-monitor run
-        //任务结果丢失处理: 循环监听调度记录(日志表)停留在 "运行中" 超过10min没执行完的数据, 将其更新成任务丢失失败状态
+        //任务结果丢失处理: 每分钟循环监听调度记录(日志表)停留在 "运行中" 超过10min没执行完的数据, 将其更新成任务丢失失败状态
         JobLosedMonitorHelper.getInstance().start();
 
-        // admin trigger pool start 创建两个线程池fastTriggerPool和slowTriggerPool
+        // admin trigger pool start 创建两个线程池: fastTriggerPool和slowTriggerPool + 调度执行入口方法
         JobTriggerPoolHelper.toStart();
 
         //按天汇总统计xxxl_job_log中每个执行器对应Handler执行状态，写入xxl_job_log_report + 删除Handler执行日志xxl_job_log(每隔一天删除一次)
+        //每分钟循环监听任务执行日
         JobLogReportHelper.getInstance().start();
 
         // start-schedule
